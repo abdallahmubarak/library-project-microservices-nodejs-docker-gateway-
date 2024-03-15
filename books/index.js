@@ -1,8 +1,9 @@
 const express = require("express");
 const app = express();
 const bodyParser = require('body-parser'); 
+const cors = require("cors");
 
-app.get('/books', (req, res) => res.send('Hello books, API with MySQL!'));
+app.get('/books', (req, res) => res.send('Hello books, API with mongo!'));
 
 
 app.use(express.json({limit: '50mb'}));
@@ -13,6 +14,8 @@ require("./config/dbBookConnection")
 
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
+app.use(cors());
+
 
 const bookRoutes = require("./routes/book.routes")
 app.use("/book", bookRoutes)

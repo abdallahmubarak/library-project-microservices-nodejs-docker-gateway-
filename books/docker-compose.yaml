@@ -1,5 +1,4 @@
 version: "3"
-
 services:
   app:
     build: .
@@ -7,7 +6,7 @@ services:
     ports:
       - "3002:3002"
     volumes:
-      - ./:/app
+      - .:/usr/app
     depends_on:
       - "mongo"
 

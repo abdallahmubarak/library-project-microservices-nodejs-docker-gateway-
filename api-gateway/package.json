@@ -4,15 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start":"nodemon index",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.3",
-    "express-http-proxy": "^2.0.0"},
-
-    "devDependencies": {
-      "http-proxy-middleware": "^2.0.6"
-    }
+    "express-http-proxy": "^2.0.0"
+  },
+  "devDependencies": {
+    "http-proxy-middleware": "^2.0.6"
   }
+}

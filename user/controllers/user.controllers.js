@@ -1,4 +1,7 @@
 const User = require('../models/user.models');
+const bcrypt=require('bcryptjs')
+const jwt  = require('jsonwebtoken')
+//const client = require('../config/cache')
 
 
 exports.createUser = async (req, res) => {
@@ -6,51 +9,86 @@ exports.createUser = async (req, res) => {
         
       if (!req.body.name ||
         !req.body.birthdate ||
+        !req.body.password ||
         !req.body.address) {  
         throw  'Please Enter Data Correct'
       }
       const user = new User ({
         name: req.body.name,
-        birthdate:  new Date(req.body.birthdate),
+        password:req.body.password,
+        birthdate:  req.body.birthdate,
         address: req.body.address,
       })
-  
-      await user.save();
+
+      await user.save();      
       console.log(user)
       return res.status(200).json({status: "user added",user});
 
     } catch (err) {
-        return handler(err, req, res);
+        return res.status(500).json({status: "error user added",err});
+
     }
   };
- 
+  exports.loginUser = async (req, res) => {
+    try {
+        
+        const { name, password } = req.body;
+        const user = await User.findOne({ name });
+          if (!user) { return res.status(401).json({ message: 'Invalid name or password' });}
+          const isMatch =  bcrypt.compare(password, user.password);
+          if (!isMatch) { return res.status(401).json({ message: 'Invalid name or password' });}
+          const token = jwt.sign(
+            {  _id: user._id,},
+            process.env.JWTKEY,
+            {
+              expiresIn: "1d",
+            }
+          );  
+          return res.status(200).json({status: "user login",user,token});
+        }
+        catch(err){
+            return res.status(500).json({status: "user error login",err});
+        }
+  };
+
+  
 exports.findAllUsers = async (req, res) => {
     try {
 
-        const users = await User.find();
+        const users = await User.find()
       return res.status(200).json({status: "correct users view",users});
 
     } catch (err) {
         console.log('error to find all user', err)
-        return handler(err, req, res);
+        return err
     }
 };
 
 exports.findOneUser = async (req, res) => {
+    
     try {
-         console.log(req.params.id)
-        let user = await User.findById(req.params.id);
+
+        let cacheKey=  req.params.id;
+         console.log(cacheKey)
+        const userFromCache = await client.get(cacheKey);
+        if(userFromCache){
+            return res.status(200).json({status: "correct to findone user from cache",userFromCache});
+        }else{
+            
+        let user = await User.findById(cacheKey)
+        await client.set(cacheKey, JSON.stringify(user));
         if (!user) {
             throw "please login "
         }
         return res.status(200).json({status: "correct to findone user",user});
 
+        }
     } catch (err) {
         console.log('user findOne Error: %s', err)
         console.log('req.params.id: %s', req.params.id)
-        return handler(err, req, res)
+        return err
     }
-};
+    };
 
 exports.updateUser = async (req, res) => {
  
@@ -83,7 +121,6 @@ exports.deleteUser = async (req, res) => {
       
         await User.findOneAndDelete(req.params.id)
  
-
         return res.status(200).send({
             message: "user has been deleted"
         });

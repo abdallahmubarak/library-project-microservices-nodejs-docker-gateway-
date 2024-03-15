@@ -1,5 +1,20 @@
 const Book = require('../models/book.models');
 
+const amqp = require("amqplib");
+
+var order, channel, connection;
+
+// RabbitMQ connection
+async function connectToRabbitMQ() {
+  const amqpServer = "amqp://guest:guest@localhost:5672";
+  connection = await amqp.connect(amqpServer);
+  channel = await connection.createChannel();
+  await channel.assertQueue("product-service-queue");
+}
+connectToRabbitMQ();
+
+
+
 exports.createBook = async (req, res) => {
     try {
       if (!req.body.title ||
@@ -93,3 +108,32 @@ exports.deleteBook = async (req, res) => {
     }
 };
 
+
+// Buy a product
+exports.buy =  async (req, res) => {
+    const { bookIds } = req.body;
+    // Get products from database with the given ids
+    const books = await Book.find({ _id: { $in: bookIds } });
+    // Send to RabbitMQ
+    channel.sendToQueue(
+      "order-service-queue",
+      Buffer.from(
+        JSON.stringify({
+          books,
+          userName: req.user.name,
+        })
+      )
+    );
+    // Consume from RabbitMQ
+    channel.consume("product-service-queue", (data) => {
+      console.log("Consumed from product-service-queue");
+      order = JSON.parse(data.content);
+      channel.ack(data);
+    });
+    return res.status(201).json({
+      message: "Order placed successfully",
+      order,
+    });
+  
+  
+  };

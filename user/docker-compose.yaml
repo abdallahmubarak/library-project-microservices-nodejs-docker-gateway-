@@ -7,16 +7,17 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - ./:/app
+      - .:/user/app
     depends_on:
       - "mongo"
 
   mongo:
-    container_name: "mongo-user"
+    container_name: "mongo-usr"
     platform: linux/amd64
     image: mongo:4.4.14
     ports:
       - 27017:27017
+ 
 networks:
   backend:
     driver: bridge
