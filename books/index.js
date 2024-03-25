@@ -16,10 +16,17 @@ app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 app.use(cors());
 
+const bookRoutes = require("./routes/book")
+const categoryRoutes = require("./routes/category")
+const subCategoryRoutes = require("./routes/subCategory")
+const brandRoutes = require("./routes/brand")
 
-const bookRoutes = require("./routes/book.routes")
 app.use("/book", bookRoutes)
+app.use("/categoryRoutes", categoryRoutes)
+app.use("/subCategoryRoutes", subCategoryRoutes)
+app.use("/brand", brandRoutes)
 
 
 
-app.listen(process.env.port, () => console.log(`books API listening on port 3002!`));
+app.listen(process.env.port, () =>
+ console.log(`books API listening on port 3002!`));

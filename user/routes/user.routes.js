@@ -1,8 +1,9 @@
 const router = require("express").Router()
 const User = require('../controllers/user.controllers')
 
-router.post('/createUser', User.createUser)
-router.post('/login', User.loginUser)
+router.post('/signup', User.signup)
+router.post('/login', User.login)
+router.post('./forgetPassword',User.forgetPassword)
 router.get('/users',User.findAllUsers)
 router.get('/user/:id',User.findOneUser)
 router.post('/updateUser/:id',User.updateUser)

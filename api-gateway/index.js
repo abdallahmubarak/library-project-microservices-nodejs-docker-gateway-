@@ -11,7 +11,7 @@ app.use(cors());
 const {
   USER_API_URL,
   ORDERS_API_URL,
-  PRODUCTS_API_URL,
+  BOOKS_API_URL,
 } = require('./URLs');
 
 
@@ -21,8 +21,8 @@ const optionsUser = {
   logger: console,
 };
 
-const optionsProducts = {
-  target: PRODUCTS_API_URL,
+const optionsBooks = {
+  target: BOOKS_API_URL,
   changeOrigin: true, 
   logger: console,
 };
@@ -34,13 +34,13 @@ const optionsOrders = {
 };
 
 const userProxy = createProxyMiddleware(optionsUser);
-const productsProxy = createProxyMiddleware(optionsProducts);
+const booksProxy = createProxyMiddleware(optionsBooks);
 const ordersProxy = createProxyMiddleware(optionsOrders);
 
 
 app.get('/', (req, res) => res.send('Hello Gateway API'));
 app.get('/user', userProxy);
 app.get('/orders', ordersProxy);
-app.get('/products', productsProxy);
+app.get('/products', booksProxy);
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

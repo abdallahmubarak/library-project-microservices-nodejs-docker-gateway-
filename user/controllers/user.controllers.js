@@ -1,26 +1,32 @@
 const User = require('../models/user.models');
 const bcrypt=require('bcryptjs')
 const jwt  = require('jsonwebtoken')
+const slugify = require('slugify')
+const SendMail =require("../config/sendMail")
+const signToken = require('../config/jwt')
+
 //const client = require('../config/cache')
+//const {setWthTTL , clearUserCache } = require('../config/cache');
 
 
-exports.createUser = async (req, res) => {
+exports.signup = async (req, res) => {
     try {
         
       if (!req.body.name ||
-        !req.body.birthdate ||
+        !req.body.email ||
         !req.body.password ||
-        !req.body.address) {  
+        !req.body.confirmPassword 
+                ) {  
         throw  'Please Enter Data Correct'
       }
       const user = new User ({
-        name: req.body.name,
+        name:req.body.name,
+        email: req.body.email,
         password:req.body.password,
-        birthdate:  req.body.birthdate,
-        address: req.body.address,
-      })
-
+        confirmPassword:  req.body.confirmPassword
+          })
       await user.save();      
+      //await new SendMail(user).sendWelcome()
       console.log(user)
       return res.status(200).json({status: "user added",user});
 
@@ -29,11 +35,13 @@ exports.createUser = async (req, res) => {
 
     }
   };
-  exports.loginUser = async (req, res) => {
+  
+  
+  exports.login = async (req, res) => {
     try {
         
-        const { name, password } = req.body;
-        const user = await User.findOne({ name });
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
           if (!user) { return res.status(401).json({ message: 'Invalid name or password' });}
           const isMatch =  bcrypt.compare(password, user.password);
           if (!isMatch) { return res.status(401).json({ message: 'Invalid name or password' });}
@@ -44,6 +52,7 @@ exports.createUser = async (req, res) => {
               expiresIn: "1d",
             }
           );  
+          
           return res.status(200).json({status: "user login",user,token});
         }
         catch(err){
@@ -51,11 +60,104 @@ exports.createUser = async (req, res) => {
         }
   };
 
-  
+  // endpoint forget password
+ 
+    exports.forgetPassword = async(req,res)=>{
+    const email = req.body;
+    if (!email) return res.status(400).json({status:'Enter your mail'});
+    // get user
+	const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({status:'no user found with this mail'});
+    // generate random 6 digits
+	const pinCode = user.generateResetCode()
+	await user.save({ validateBeforeSave: false })
+	//send mail
+    try {
+		const mail = new SendMail(user, pinCode)
+		await mail.sendResetPassword()
+		res.status(200).json({ msg: 'mail sent' })
+	} catch (err) {
+		console.log(err)
+		user.resetCode = undefined
+		user.codeExpires = undefined
+		user.isVerified = undefined
+		user.save()
+		res.status(500).json({ msg: 'something went wrong' })
+	}
+  }
+
+  // verify pin 
+  exports.verifyPin = async (req, res, next) => {
+	const { code } = req.body
+	if (!code || `${code}`.length < 5)
+    res.status(400).json({ msg: 'incorrect pin code' })
+	const hashedCode = crypto.createHash('sha256').update(`${code}`).digest('hex')
+	const user = await User.findOne({
+		resetCode: hashedCode,
+		codeExpires: { $gt: Date.now() },
+	})
+	if (!user)
+		res.status(400).json({msg:'code may be wrong or expired try again'})
+	user.isVerified = true
+	await user.save({ validateBeforeSave: false })
+	res.status(200).json({ msg: 'success' })
+}
+
+//  reset password 
+exports.resetPassword = async (req, res, next) => {
+	const { email, newPassword, newConfirm } = req.body
+	const user = await User.findOne({ email })
+	if (!user) return res.status(400).json({msg:'no user found with this mail'}) 
+	if (!user.isVerified)
+	if (!user) return res.status(400).json({msg:'Reset code not verified'})
+	user.password = newPassword
+	user.confirmPassword = newConfirm
+	user.changePasswordAt = Date.now()
+	user.isVerified = undefined
+	user.codeExpires = undefined
+	user.resetCode = undefined
+	await user.save()
+	const token = signToken(user._id)
+	res.status(200).json({
+		status: 'success',
+		data: {
+			token,
+		},
+	})
+}
+//authorization role 
+exports.allowTo =
+	(...roles) =>
+	(req, res, next) => {
+		if (!roles.includes(req.user.role))
+			return next(new AppError(401, 'un authorized to this route'))
+		next()
+	}
+
+
+//update password
+exports.updatePassword = async (req, res, next) => {
+	const { password, newPassword, confirmNew } = req.body
+	const user = await User.findById(req.user.id).select('+password')
+	if (!(await user.checkPasswords(password, user.password)))
+		return res.status(401).json({msg:'wrong password , try again'})
+	user.password = newPassword
+	user.confirmPassword = confirmNew
+	await user.save()
+	const token = signToken(user._id)
+	res.status(200).json({
+		status: 'success',
+		data: {
+			token,
+		},
+	})
+}
+
 exports.findAllUsers = async (req, res) => {
     try {
 
         const users = await User.find()
+        console.log(users)
       return res.status(200).json({status: "correct users view",users});
 
     } catch (err) {
@@ -114,19 +216,28 @@ exports.updateUser = async (req, res) => {
  
 exports.deleteUser = async (req, res) => {
     try {
-
-        if (!req.params.id) {
+        var  userId  = req.params.id;
+        if (!userId) {
             throw 'please login .....'
         }
-      
-        await User.findOneAndDelete(req.params.id)
- 
-        return res.status(200).send({
-            message: "user has been deleted"
-        });
+        
+        let clearUserFromCache = await clearUserCache(userId)
+        if (clearUserFromCache === 1) {
+            return res.json({ Result: "User succesfully deleted from Redis Cache" });
+        let clearUserFromDb = await User.findOneAndDelete(userId)
+            if (clearUserFromDb===1) {
+                return res.json({ Result: "User succesfully deleted from data base" });   
+            }else{
+                return res.json({ Result: `There is no value depend of key in data base: ${userId}` })
+            }
+        }
+        return res.json({ Result: `There is no value depend of key in Redis Server: ${userId}` })
+        
     } catch (err) {
         console.log('user delete error %s', err)
-        return handler(err, req, res);
+        return res.json({ Result: `There is no value depend of key in Redis Server:` ,err })
+
+
     }
 
 };

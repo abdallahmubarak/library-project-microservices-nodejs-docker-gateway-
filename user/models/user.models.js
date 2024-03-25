@@ -1,56 +1,60 @@
 const mongoose = require("mongoose");
-//const validator = require("validator")
+const validator = require("validator")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 
 const userSchema = new mongoose.Schema({
-   
-    name: {
-      type: String,
-      required: true,
-      unique: true
-    },password:{
-      
-      type: String,
-      required: true
-    },
-    birthdate: {
-      type: String,
-      required: true
-    },
-    address: {
-      type: String,
-      required: false
-    },
-    balance: {
-      amount: {
-        type: Number,
-        default: 0
-      },
-      currency: {
-        type: String,
-        default: '€'
-      },
-      userId:{
-        type:mongoose.Schema.Types.ObjectId
-      },
-        token:{type:String}
-    }
-}, {timestamps:true})
-
-userSchema.pre("save", async function(){
-  const userData = this
-  if(userData.isModified("password"))
-      userData.password = await bcrypt.hash(userData.password, 10)
+	name: {
+		type: String,
+		trim: true,
+		required: [true, 'name required'],
+	},
+	email: {
+		type: String,
+		unique: true,
+	},
+	password: {
+		type: String,
+		minLength: [8, 'short password'],
+	},
+	confirmPassword: {
+		type: String,
+		validate: {
+			validator: function (val) {
+				return val === this.password
+			},
+			message: 'confirm password is wrongs',
+		},
+	},
+	image: { type: String, default: 'default.jpg' },
+	role: {
+		type: String,
+		default: 'user',
+		enum: ['admin', 'user'],
+		select: false,
+	},
+	slug: {
+		type: String,
+		lower: true,
+	},
+	active: {
+		type: Boolean,
+		default: true,
+		select: false,
+	},
+	changePasswordAt: Date,
+	resetCode: String,
+	codeExpires: Date,
+	isVerified: Boolean,
 })
 
-userSchema.statics.login = async(email, password)=>{
-  const userData = await User.findOne({name})
-  if(!userData) throw new Error("invalid name")
-  const isvalid = await bcrypt.compare(password, userData.password)
-  if(!isvalid) throw new Error("invalid password")
-  return userData
-}
+
+userSchema.pre('save', async function (next) {
+	if (!this.isModified('password')) return next()
+	this.password = await bcrypt.hash(this.password, 12)
+	this.confirmPassword = undefined
+	next()
+})
 
 userSchema.methods.generateToken = async function(){
   const user = this

@@ -1,4 +1,4 @@
-//const mongoose = require("mongoose")
 var mongoose = require('mongoose')
 
-mongoose.connect(process.env.UserDB);
+//mongoose.set("strictQuery", false);
+mongoose.connect(process.env.UserDB)
