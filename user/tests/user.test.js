@@ -1,43 +1,35 @@
-/*
+
 const app = require("../index");
 const User = require("../models/user.models");
 const mongoose = require("mongoose");
+const db =require('../config/dbUserConnection')
 const supertest = require("supertest");
+const request = supertest(app)
 
-//-------------------------------------------------------
-beforeEach((done) => {
-  mongoose.connect("mongodb://localhost:27017/JestDB",
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    () => done());
-});
-
-afterEach((done) => {
-  mongoose.connection.db.dropDatabase(() => {
-    mongoose.connection.close(() => done())
-  });
-});
-
-//-------------------------------------------------------
 //test get all users Endpoint
-describe("Get all user should return all users in database",
- () => test("GET /api/users", async () => {
-  const user = await User.create({ name: "mohamed mubarak", password: "mohamed@#33", birthdate: "20/3/1989" });
+describe('GET /users', async() => {
+  it('should return all users', async () => {
+    const response = await request(app).get('/user/users'); 
+    expect(response.statusCode).toBe(200);
+    
+    });
+})
 
-  await supertest(app).get("/api/users")
+
+describe("GET /users/:id", async () => {
+ it('should return user',async () => {
+  const user = await User.create({ name: "abdallah mubarak", email: "abdallahmubarak55@gmail.com" });
+  await Request.get("/user/users" + user.id)
     .expect(200)
     .then((response) => {
-      // Check type and length
-      expect(Array.isArray(response.body)).toBeTruthy();
-      expect(response.body.length).toEqual(1);
-
-      // Check data
-      expect(response.body[0]._id).toBe(user.id);
-      expect(response.body[0].name).toBe(user.name);
-      expect(response.body[0].password).toBe(post.password);
-      expect(response.body[0].birthdate).toBe(post.birthdate);
-
+      expect(response.body._id).toBe(user.id);
+      expect(response.body.name).toBe(user.name);
+      expect(response.body.email).toBe(user.email);
     });
-}))
+});
+
+ })
+  
 
 //----------------------------------------------------------
 /*
@@ -58,18 +50,6 @@ test("POST /api/posts", async () => {
       expect(post).toBeTruthy();
       expect(post.title).toBe(data.title);
       expect(post.content).toBe(data.content);
-    });
-});
-
-test("GET /api/posts/:id", async () => {
-  const post = await Post.create({ title: "Post 1", content: "Lorem ipsum" });
-
-  await supertest(app).get("/api/posts/" + post.id)
-    .expect(200)
-    .then((response) => {
-      expect(response.body._id).toBe(post.id);
-      expect(response.body.title).toBe(post.title);
-      expect(response.body.content).toBe(post.content);
     });
 });
 

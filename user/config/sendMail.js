@@ -1,3 +1,4 @@
+/*
 const nodemailer = require('nodemailer')
 const pug = require('pug')
 const htmlToText = require('html-to-text')
@@ -15,12 +16,12 @@ module.exports = class Email {
 		// sendGrip
 		return nodemailer.createTransport({
 			service: 'gmail',
-			host: 'smtp.gmail.com',
+			host: 'smtp.ethereal.email',
 			port: 587,
 			secure: false,
 			auth: {
-				user: 'amrmoha960@gmail.com',
-				pass: 'sdge hwwj ohwg mkln',
+				user: 'mireya.kshlerin54@ethereal.email',
+				pass: 'MR8BbMKe2jYbFPUqW5',
 			},
 		})
 	}
@@ -55,3 +56,4 @@ module.exports = class Email {
 		)
 	}
 }
+*/

@@ -22,8 +22,8 @@ const subCategoryRoutes = require("./routes/subCategory")
 const brandRoutes = require("./routes/brand")
 
 app.use("/book", bookRoutes)
-app.use("/categoryRoutes", categoryRoutes)
-app.use("/subCategoryRoutes", subCategoryRoutes)
+app.use("/category", categoryRoutes)
+app.use("/subCategory", subCategoryRoutes)
 app.use("/brand", brandRoutes)
 
 

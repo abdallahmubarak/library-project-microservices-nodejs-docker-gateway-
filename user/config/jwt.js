@@ -15,5 +15,6 @@ class Auth{
             return res.status(500).json({status: "error",e});
         }
     }
-}    
+}   
+    
 module.exports = Auth

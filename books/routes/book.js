@@ -1,9 +1,10 @@
   
 const router = require("express").Router()
 const books = require('../controllers/book')
-const auth =require('../../user/config/jwt')
+const User = require('../../user/controllers/user.controllers')
+const {auth,authAdmin,authUser} =require('../../user/config/jwt')
 
-router.post('/createBook',auth,books.createBook)
+router.post('/createBook',books.createBook)
 router.get('/all',books.getAllBooks)
 router.get('/fineOne/:id',books.getBook)
 router.post('/update/:id',books.updateBook)

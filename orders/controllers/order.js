@@ -4,10 +4,6 @@ const Coupon = require('../models/coupons')
 const Order = require('../model/Order');
 const mongoose = require("mongoose");
 
-
-
-
-
 exports.createOrder = async (req, res) => {
     try {
       if (!req.body.bookID ||

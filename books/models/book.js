@@ -71,17 +71,6 @@ const schema = mongoose.Schema(
 		toObject: { virtuals: true },
 	}
 )
-schema.virtual('reviews', {
-	ref: 'Review',
-	foreignField: 'book',
-	localField: '_id',
-})
-schema.pre(/^find/, function (next) {
-	this.populate({
-		path: 'category',
-		select: 'name -_id',
-	}).populate('reviews')
-	next()
-})
 
-module.exports = mongoose.model('Product', schema)
+
+module.exports = mongoose.model('Book', schema)

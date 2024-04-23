@@ -14,32 +14,28 @@ connectToRabbitMQ();
 
 
 */
-/*
+
 exports.createBook = async (req, res) => {
     try {
-      if (!req.body.title ||
-        !req.body.author ||
-        !req.body.numberPages ||
-        !req.body.publisher) {  
-        throw  'please enter data complete not empty any cell'
-      }
+
       const book = new Book ({
-        title: req.body.title,
-        author: req.body.author,
-        numberPages: req.body.numberPages,
-        publisher: req.body.publisher,
-      })
+          title: req.body.title, 
+          description:req.body.description ,
+          colors: req.body.colors,
+          price: req.body.price,
+          quantity:req.body.quantity
+                    })
   
       await book.save();
       console.log(book)
 
       return res.status(200).json({status: "book added",book});
     } catch (err) {
-        return handler(err, req, res);
+        return err;
     }
   };
  
-
+/*
 exports.findOne = async (req, res) => {
     try {
         console.log(req.params.id)
@@ -129,7 +125,7 @@ exports.buy =  async (req, res) => {
   
     
 //    exports.getAllBooks = factory.getAll(Book)
-    exports.createBook = factory.createOne(Book)
+   // exports.createBook = factory.createOne(Book)
     exports.getBook = factory.getOne(Book)
     exports.updateBook = factory.updateOne(Book)
     exports.deleteBook = factory.deleteOne(Book)

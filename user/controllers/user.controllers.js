@@ -26,7 +26,7 @@ exports.signup = async (req, res) => {
         confirmPassword:  req.body.confirmPassword
           })
       await user.save();      
-      //await new SendMail(user).sendWelcome()
+      await new SendMail(user).sendWelcome()
       console.log(user)
       return res.status(200).json({status: "user added",user});
 
@@ -35,8 +35,7 @@ exports.signup = async (req, res) => {
 
     }
   };
-  
-  
+
   exports.login = async (req, res) => {
     try {
         
@@ -59,6 +58,21 @@ exports.signup = async (req, res) => {
             return res.status(500).json({status: "user error login",err});
         }
   };
+
+  
+exports.findAllUsers = async (req, res) => {
+    try {
+
+        const users = await User.find()
+        console.log(users)
+      return res.status(200).json({status: "correct users view",users});
+
+    } catch (err) {
+        console.log('error to find all user', err)
+        return err
+    }
+};
+
 
   // endpoint forget password
  
@@ -86,7 +100,7 @@ exports.signup = async (req, res) => {
 	}
   }
 
-  // verify pin 
+/*  // verify pin 
   exports.verifyPin = async (req, res, next) => {
 	const { code } = req.body
 	if (!code || `${code}`.length < 5)
@@ -125,14 +139,6 @@ exports.resetPassword = async (req, res, next) => {
 		},
 	})
 }
-//authorization role 
-exports.allowTo =
-	(...roles) =>
-	(req, res, next) => {
-		if (!roles.includes(req.user.role))
-			return next(new AppError(401, 'un authorized to this route'))
-		next()
-	}
 
 
 //update password
@@ -153,18 +159,14 @@ exports.updatePassword = async (req, res, next) => {
 	})
 }
 
-exports.findAllUsers = async (req, res) => {
-    try {
 
-        const users = await User.find()
-        console.log(users)
-      return res.status(200).json({status: "correct users view",users});
-
-    } catch (err) {
-        console.log('error to find all user', err)
-        return err
-    }
-};
+exports.allowTo =
+	(...roles) =>
+	(req, res, next) => {
+		if (!roles.includes(req.user.role))
+			return next(new AppError(401, 'un authorized to this route'))
+		next()
+	}
 
 exports.findOneUser = async (req, res) => {
     
@@ -193,18 +195,18 @@ exports.findOneUser = async (req, res) => {
     };
 
 exports.updateUser = async (req, res) => {
- 
     try {
-        
         if (!req.params.id) {
             throw 'please login'
         }
-        
         const userId = req.params.id;
-        let userInfo = req.body;
+        let userInfo =({
+            name:req.body.name,
+            email: req.body.email
+        })
         console.log(userId,userInfo)
- 
-        User.findOneAndUpdate({ _id: userId }, userInfo, { new: true })
+        User.findOneAndUpdate(
+            { _id: userId }, userInfo, { new: true })
         //const user = await User.findById(userId)
         return res.status(200).json({status: "correct to update user",userId,userInfo});
 
@@ -241,7 +243,7 @@ exports.deleteUser = async (req, res) => {
     }
 
 };
-/*
+
 async function updateBalance(order){
     try{
         console.log('updateBalance.....', order)
